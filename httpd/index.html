@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <head>
+    <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-5">
     <script>
         var KISMET_URI_PREFIX="../../"
 </script>
@@ -79,14 +80,6 @@
 
     var bAuth = "";
 
-
- 
-
-
-
-
-
-
     var login = function login() {
 
         const username = document.querySelector('#username').value;
@@ -94,8 +87,6 @@
 
         bAuth = btoa(username + ":" + password);
         bAuthC = "Basic " + bAuth
-
-
 
         jQuery.ajax({
                 url: "../../session/check_login",
@@ -119,10 +110,6 @@
             .always(function() {
                 /* ... */
             });
-
-
-
-
 
     }
 
@@ -224,23 +211,24 @@
                 var utime = Math.round((data['kismet.system.timestamp.sec'] - data['kismet.system.timestamp.start_sec']) / 60);
 
 
-                var now = (data['kismet.device.packets_rrd']['kismet.common.rrd.last_time'] - 1) % 60;
-                var packets = data['kismet.device.packets_rrd']['kismet.common.rrd.minute_vec'][now];
+                var now = (data['kismet.system.devices.rrd']['kismet.common.rrd.last_time'] - 1) % 60;
+                var packets = data['kismet.system.devices.rrd']['kismet.common.rrd.minute_vec'][now];
 
 
 
 
-                utime = " Uptime: " + utime + " minutes.";
-
+                utime = " Uptime: " + utime + " min";
                 $('#utime_d').html(utime);
 
+                servername = data['kismet.system.server_name'];
+                $('#servername').html(servername);
 
                 $('#numdevs').html(devices);
 
                 $('#numpackets').html(packets);
 
-        
 
+                getGPS();
                 getDatasources();
                 getDevices();
 
@@ -251,13 +239,45 @@
          //       console.log("HTTP Request Failed");
             })
             .always(function() {
-                setTimeout(status, 5000);
+                setTimeout(status, 10000);
             });
 
 
     }
 
 
+    function getGPS() {
+
+        $.get("../../gps/location.json")
+
+            .done(function(data) {
+                //console.log(data)
+                if (data['kismet.common.location.fix'] > 1){
+                  //console.log("fix is good");
+                  lat = data['kismet.common.location.geopoint'][1];
+                  //console.log(lat);
+                  //console.log(data['kismet.common.location.geopoint']);
+                  lon = data['kismet.common.location.geopoint'][0];
+                  heading = Math.round(data['kismet.common.location.heading']);
+                  speed = Math.round(data['kismet.common.location.speed']);
+                  alt = Math.round(data['kismet.common.location.alt']);
+                }
+                gpsfix = " GPS Fix: " + data['kismet.common.location.fix'] + "D";
+                mapurl = "https://maps.google.com/maps?&z=12&q=" + lat + "+" + lon + "&ll=" + lat + "+" + lon
+                var link = document.getElementById("maplink");
+                link.setAttribute("href", mapurl);
+                $('#printfix').html(gpsfix);
+                $('#printlat').html(lat);
+                $('#printlon').html(lon);
+                $('#printheading').html(heading);
+                $('#printspeed').html(speed);
+                $('#printalt').html(alt);
+
+            })
+            .always(function() {
+                setTimeout(getGPS, 10000);
+            });
+    }
 
     function getDatasources() {
         var allSourceC = "";
@@ -302,7 +322,7 @@
 
             })
             .always(function() {
-                setTimeout(getDatasources, 5000);
+                setTimeout(getDatasources, 20000);
             });
     }
 
@@ -310,14 +330,14 @@
     function getDevices() {
 
         jQuery.ajax({
-                url: "../../devices/summary/devices.json",
+                url: "../../devices/views/all/devices.json",
                 type: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
                 },
                 contentType: "application/x-www-form-urlencoded",
                 data: {
-                    "json": "{\"fields\":[\"kismet.device.base.type\"]}",
+                    "json": "{\"fields\":[\"kismet.device.base.type\",\"kismet.device.base.manuf\",\"kismet.device.base.phyname\"]}",
                 },
             })
 
@@ -331,8 +351,8 @@
 
 
                 var num802APs = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi AP" }).length;
-                var num802Clients = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi Client" }).length;
-                var num802Devices = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi Device" }).length;
+                var num802Clients = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi Device" }).length;
+                var num802Devices = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi Device (Inferred)" }).length;
                 var num802Bridges = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi Bridged" }).length;
                 var num802Adhocs = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi Ad-Hoc" }).length;
                 var num802WDSs = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi WDS" }).length;
@@ -340,12 +360,12 @@
                 var numBTLEs = data.filter(function(data) { return data['kismet.device.base.type'] == "BTLE" }).length;
                 var numBrs = data.filter(function(data) { return data['kismet.device.base.type'] == "BR/EDR" }).length;
 
-                var numMousejack = data.filter(function(data) { return data['kismet.device.base.type'] == "NrfMousejack" }).length;
+                var numMousejack = data.filter(function(data) { return data['kismet.device.base.phyname'] == "NrfMousejack" }).length;
 
-
-                var numRT433 = data.filter(function(data) { return data['kismet.device.base.type'] == "RTL433" }).length;
-                var numZwave = data.filter(function(data) { return data['kismet.device.base.type'] == "Z-Wave" }).length;
-                var numUAVC = data.filter(function(data) { return data['kismet.device.base.type'] == "UAV" }).length;
+                var numRTL433 = data.filter(function(data) { return data['kismet.device.base.manuf'] == "RTL433" }).length;
+                var numRTLADSB = data.filter(function(data) { return data['kismet.device.base.manuf'] == "RTLADSB" }).length;
+                var num802154 = data.filter(function(data) { return data['kismet.device.base.type'] == "802.15.4" }).length;
+                var numUAVC = data.filter(function(data) { return data['kismet.device.base.type'] == "Wi-Fi AP" }).length;
                 var numUnknown = data.filter(function(data) { return data['kismet.device.base.type'] == "" }).length;
 
 
@@ -358,10 +378,12 @@
                 $('#num802WDS_d').html(num802WDSs);
                 $('#numBTLE_d').html(numBTLEs);
                 $('#numBR_d').html(numBrs);
-                $('numMousejack_d').html(numMousejack);
-                $('numRT433_d').html(numRT433);
-                $('numUAVC_d').html(numUAVC);
-                $('numUnknown_d').html(numUnknown);
+                $('#numMousejack_d').html(numMousejack);
+                $('#numRTL433_d').html(numRTL433);
+                $('#numRTLADSB_d').html(numRTLADSB);
+                $('#num802154_d').html(num802154);
+                $('#numUAVC_d').html(numUAVC);
+                $('#numUnknown_d').html(numUnknown);
 
 
 
@@ -395,8 +417,8 @@
                 iq = data.length;
 
                 $('#datasourceslist').empty();
-                
-               
+
+
 
                 var datasources = [];
                 datasources = data;
@@ -411,7 +433,7 @@
 
                     } else if (data[di]["kismet.datasource.paused"] == 0 && data[di]["kismet.datasource.running"] == 1) {
                         sourceState = "Running";
-                    } 
+                    }
 
                     if (data[di]["kismet.datasource.error"] == 1) {
                         sourceState = "Error";
@@ -423,7 +445,7 @@
                         '<ons-row><ons-col><span class="dsheader">Driver Type: </span>' + data[di]["kismet.datasource.type_driver"]["kismet.datasource.driver.type"] + '</ons-col></ons-row>' + '<ons-row><ons-col><span class="dsheader">Hardware: </span>' + data[di]["kismet.datasource.hardware"] + '</ons-row>' +
                         '<ons-row><ons-col><span class="dsheader">UUID: </span><span style="font-size:13px;">' + data[di]["kismet.datasource.uuid"] + '</span></ons-col></ons-row>' + '<ons-row><ons-col><span class="dsheader">Packets: </span>' + data[di]['kismet.datasource.num_packets'] + '</ons-col></ons-row>' + '<span style="padding-top:10px;"><ons-row vertical-align="true"><ons-col><span class="dsheader" style="margin-top:15px;padding-right:10px;padding-top:10px;">Running: </span><ons-button id="statebut" modifier="material,light" onclick="pause_restart_datasource(\'' + data[di]["kismet.datasource.uuid"] + '\'' + ',' + '\'' + sourceState + '\'' + ')">' + sourceState + ' </ons-button></ons-col></ons-row></span>' + '</ons-card>');
 
-                  
+
 
                 }
 
@@ -548,7 +570,7 @@
 
 
         jQuery.ajax({
-                url: "../../devices/summary/devices.json",
+                url: "../../devices/views/all/devices.json",
                 type: "POST",
                 headers: {
 
@@ -564,7 +586,7 @@
                 // console.log("HTTP Request Succeeded: " + jqXHR.status);
 
 
-                
+
                 Filtered_data = data_r.filter(function(data_r) { return data_r['kismet.device.base.type'] == devType });
 
                 $('#listheading').html(devType);
@@ -622,7 +644,7 @@
     url: "../../logging/active.json",
     type: "GET",
     headers: {
-       
+
     },
 })
 .done(function(data, textStatus, jqXHR) {
@@ -676,7 +698,7 @@
 
 var json = {
     "note":"this is poi test"
-   
+
 };
 
 var postdata = "json=" + JSON.stringify(json);
@@ -706,7 +728,7 @@ $.post("/poi/create_poi.cmd", data = postdata, dataType = "json");
 </head>
 
 <body>
-   
+
     <ons-splitter>
         <ons-splitter-side id="menu" side="left" width="220px" collapse swipeable>
             <ons-page>
@@ -752,7 +774,7 @@ $.post("/poi/create_poi.cmd", data = postdata, dataType = "json");
             <div class="center">
                 <div class="card">
                     <ons-row class="cheader">
-                        <ons-col>System Details:<span style="color:black"> <span id="utime_d"></span></span></ons-col>
+                        <ons-col>System (<span id="servername">-</span>) Details:<span style="color:black"> <span id="utime_d"></span></span></ons-col>
                     </ons-row>
                     <ons-row height="140px">
                         <ons-col></ons-col>
@@ -767,6 +789,22 @@ $.post("/poi/create_poi.cmd", data = postdata, dataType = "json");
                     </ons-row>
                 </div>
                 <div class="card">
+                    <ons-row class="cheader">
+                        <ons-col>System Location:<span style="color:black"> <span id="printfix"></span></span></ons-col>
+                    </ons-row>
+                    <ons-row height="140px">
+                        <ons-col></ons-col>
+                    </ons-row>
+                    <ons-row>
+                        <ons-col class="bignum"><a href="" id="maplink" target="_blank"><span id="printlat">-</span>, <span id="printlon">-</span></a><br><span class="subtitle">Lat/Lon</span><br></ons-col>
+                        <ons-col class="bignum"><span id="printalt">-</span><br><span class="subtitle">Altitude</span></ons-col>
+                        <ons-col class="bignum"><span id="printheading">-</span><br><span class="subtitle">Heading</span></ons-col>
+                        <ons-col class="bignum"><span id="printspeed">-</span><br><span class="subtitle">Speed</span></ons-col>
+
+                    </ons-row>
+                </div>
+
+                <div class="card">
                     <ons-row>
                         <ons-col class="cheader">
                             <ons-icon icon="fa-wifi" style="padding-right:10px;color:black" size="18px"></ons-icon> 802.11 details
@@ -774,8 +812,8 @@ $.post("/poi/create_poi.cmd", data = postdata, dataType = "json");
                     </ons-row>
                     <ons-row>
                         <ons-col class="bignum"><span id="num802Aps_d" onclick="getDev_byType('Wi-Fi AP')" style="cursor: pointer;">-</span><br><span class="subtitle">APs</span></ons-col>
-                        <ons-col class="bignum"><span id="num802Clients_d" onclick="getDev_byType('Wi-Fi Client')" style="cursor: pointer;">-</span><br><span class="subtitle">Clients</span></ons-col>
-                        <ons-col class="bignum"><span id="num802Devices_d" onclick="getDev_byType('Wi-Fi Device')" style="cursor: pointer;">-</span><br><span class="subtitle">Devices</span></ons-col>
+                        <ons-col class="bignum"><span id="num802Clients_d" onclick="getDev_byType('Wi-Fi Device')" style="cursor: pointer;">-</span><br><span class="subtitle">Clients</span></ons-col>
+                        <ons-col class="bignum"><span id="num802Devices_d" onclick="getDev_byType('Wi-Fi Device (Inferred)')" style="cursor: pointer;">-</span><br><span class="subtitle">Devices</span></ons-col>
                         <ons-col class="bignum"><span id="num802Bridges_d" onclick="getDev_byType('Wi-Fi Bridged')" style="cursor: pointer;">-</span><br><span class="subtitle">Bridged</span></ons-col>
                         <ons-col class="bignum"><span id="num802Adhoc_d" onclick="getDev_byType('Wi-Fi Ad-Hoc')" style="cursor: pointer;">-</span><br><span class="subtitle">AdHoc </span></ons-col>
                         <ons-col class="bignum"><span id="num802WDS_d" onclick="getDev_byType('WiFi WDS')" style="cursor: pointer;">-</span><br><span class="subtitle">WDS </span></ons-col>
@@ -784,41 +822,34 @@ $.post("/poi/create_poi.cmd", data = postdata, dataType = "json");
                 <div class="card">
                     <ons-row>
                         <ons-col class="cheader">
-                            <ons-icon icon="fa-wifi" style="padding-right:10px;color:black" size="18px"></ons-icon> 802.11 Channels
+                            <ons-icon icon="fa-globe" style="padding-right:10px;color:black" size="18px"></ons-icon> Other Devices
+                        </ons-col>
+                    </ons-row>
+                    <ons-row>
+                        <ons-col class="bignum"><span id="numBTLE_d" onclick="getDev_byType('BTLE')" style="cursor: pointer;">-</span><br><span class="subtitle">BTLE Devices</span></ons-col>
+                        <ons-col class="bignum"><span id="numBR_d" onclick="getDev_byType('BREDR')" style="cursor: pointer;">-</span><br><span class="subtitle">BR/EDR Devices</span></ons-col>
+                        <ons-col class="bignum"><span id="numRTL433_d">-</span><br><span class="subtitle" onclick="getDev_byType('Sensor')" style="cursor: pointer;">RTL433</span></ons-col>
+                        <ons-col class="bignum"><span id="numRTLADSB_d">-</span><br><span class="subtitle" onclick="getDev_byType('Airplane')" style="cursor: pointer;">ADSB</span></ons-col>
+                        <ons-col class="bignum"><span id="num802154_d">-</span><br><span class="subtitle" onclick="getDev_byType('802.15.4')" style="cursor: pointer;">802.15.4</span></ons-col>
+                        <ons-col class="bignum"><span id="numMousejack_d">-</span><br><span class="subtitle" onclick="getDev_byType('KB/Mouse')" style="cursor: pointer;">Mousejack</span></ons-col>
+                        <ons-col class="bignum"><span id="numUAV_d">-</span><br><span class="subtitle" onclick="getDev_byType('UAV')" style="cursor: pointer;">UAV</span></ons-col>
+                        <ons-col class="bignum"><span id="numUnknown_d">-</span><br><span class="subtitle">Unknown*</span></ons-col>
+                    </ons-row>
+                    <ons-row>
+                        <ons-col align="right"><span class="subtitle">(*unknown=Empty kismet.device.base.type field)</span></ons-col>
+                    </ons-row>
+                </div>
+                <div class="card">
+                    <ons-row>
+                        <ons-col class="cheader">
+                            <ons-icon icon="fa-wifi" style="padding-right:10px;color:black" size="18px"></ons-icon>Channels
                             <ons-row>
                                 <ons-col style="padding-top:10px;">
                                     <object data="views/channelmobiledisp.html" width="100%"></object>
                                 </ons-col>
                             </ons-row>
                 </div>
-                <div class="card">
-                    <ons-row>
-                        <ons-col class="cheader">
-                            <ons-icon icon="fa-bluetooth-b" style="padding-right:10px;color:black" size="18px"></ons-icon> Bluetooth
-                        </ons-col>
-                    </ons-row>
-                    <ons-row>
-                        <ons-col class="bignum"><span id="numBTLE_d" onclick="getDev_byType('BTLE')" style="cursor: pointer;">-</span><br><span class="subtitle">BTLE Devices</span></ons-col>
-                        <ons-col class="bignum"><span id="numBR_d" onclick="getDev_byType('BREDR')" style="cursor: pointer;">-</span><br><span class="subtitle">BR/EDR Devices</span></ons-col>
-                    </ons-row>
-                </div>
-                <div class="card">
-                    <ons-row>
-                        <ons-col class="cheader">
-                            <ons-icon icon="fa-globe" style="padding-right:10px;color:black" size="18px"></ons-icon> Other
-                        </ons-col>
-                    </ons-row>
-                    <ons-row>
-                        <ons-col class="bignum"><span id="numRTL433_d">-</span><br><span class="subtitle" onclick="getDev_byType('RTL433')" style="cursor: pointer;">RTL433</span></ons-col>
-                        <ons-col class="bignum"><span id="numZWave_d">-</span><br><span class="subtitle" onclick="getDev_byType('ZWave')" style="cursor: pointer;">Z-Wave</span></ons-col>
-                        <ons-col class="bignum"><span id="numMousejack_d">-</span><br><span class="subtitle" onclick="getDev_byType('Mousejack')" style="cursor: pointer;">Mousejack</span></ons-col>
-                        <ons-col class="bignum"><span id="numUAV_d">-</span><br><span class="subtitle" onclick="getDev_byType('UAV')" style="cursor: pointer;">UAV</span></ons-col>
-                        <ons-col class="bignum"><span id="numUnkown_d">-</span><br><span class="subtitle">Unknown*</span></ons-col>
-                    </ons-row>
-                    <ons-row>
-                        <ons-col align="right"><span class="subtitle">(*unkown=Emplyt kismet.device.basetype)</span></ons-col>
-                    </ons-row>
-                </div>
+
             </div>
             <ons-bottom-toolbar>
                 <h2 class="card__title" style="text-align:center;font-weight:bold;padding-top:5px;">KISMET Mobile Dashboard
