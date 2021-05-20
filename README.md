@@ -47,5 +47,5 @@ If you don't want to use the formal make process above, simply do the following:
 1. Create a "plugins" folder in the user that runs kismet's home/.kismet folder. For example: ~/.kismet/plugins or /root/.kismet/plugins
 2. In this folder, create a new folder for "mobiledashboard".
 3. Copy the manifest.conf file into the "mobiledashboard" folder.
-4. Copy (recursively) the httpd folder in the "mobiledashboard" folder.
+4. Copy (recursively) the httpd folder into the "mobiledashboard" folder.
 5. Restart Kismet.
