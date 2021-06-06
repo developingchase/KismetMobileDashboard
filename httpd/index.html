@@ -309,11 +309,15 @@
 
                 for (var i = 0; i < data.length; i++) {
                     var ds = data[i];
-
-                    for (var c in ds['kismet.datasource.channels']) {
-                        chans[ds['kismet.datasource.channels'][c]] = 1;
+                    if (ds['kismet.datasource.running'] == 1) {
+                        if (ds['kismet.datasource.hopping'] == 1) {
+                            for (var c in ds['kismet.datasource.hop_channels']) {
+                                chans[ds['kismet.datasource.hop_channels'][c]] = 1;
+                            }
+                        }else{
+                            chans[ds['kismet.datasource.hop_channels'][0]] = 1;
+                        }
                     }
-
                     if (data[i]['kismet.datasource.error'] == 1){
                         $('#numsources').addClass('error');
 
