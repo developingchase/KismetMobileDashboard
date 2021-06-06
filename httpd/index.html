@@ -210,12 +210,8 @@
 
                 var utime = Math.round((data['kismet.system.timestamp.sec'] - data['kismet.system.timestamp.start_sec']) / 60);
 
-
                 var now = (data['kismet.system.devices.rrd']['kismet.common.rrd.last_time'] - 1) % 60;
                 var packets = data['kismet.system.devices.rrd']['kismet.common.rrd.minute_vec'][now];
-
-
-
 
                 utime = " Uptime: " + utime + " min";
                 $('#utime_d').html(utime);
@@ -224,9 +220,6 @@
                 $('#servername').html(servername);
 
                 $('#numdevs').html(devices);
-
-                $('#numpackets').html(packets);
-
 
                 getGPS();
                 getDatasources();
@@ -241,7 +234,25 @@
             .always(function() {
                 setTimeout(status, 10000);
             });
+        jQuery.ajax({
+                url: "../../packetchain/packet_stats.json",
+                type: "GET",
+                headers: {
 
+                },
+            })
+            .done(function(data, textStatus, jqXHR) {
+                // console.log("HTTP Request Succeeded: " + jqXHR.status);
+
+                var packets = data['kismet.packetchain.peak_packets_rrd']['kismet.common.rrd.minute_vec'][0];
+                $('#numpackets').html(packets);
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+         //       console.log("HTTP Request Failed");
+            })
+            .always(function() {
+                setTimeout(status, 10000);
+            });
 
     }
 
@@ -785,7 +796,13 @@ $.post("/poi/create_poi.cmd", data = postdata, dataType = "json");
                         <ons-col class="bignum"><span id="numpackets" style="padding-right:3px;">-</span>
                             <br><span class="subtitle">Packets/sec</span>
                         </ons-col>
-                        <ons-col class="bignum"><span id="numdevs">-</span><i class="dataup" id="devup"></i><i class="datadown" id="devdown"></i><br><span class="subtitle">Total # of Devices</span></ons-col>
+                        <ons-col class="bignum">
+                            <span id="numdevs">-</span>
+                            <i class="dataup" id="devup"></i>
+                            <i class="datadown" id="devdown"></i>
+                            <br>
+                            <span class="subtitle">Total # of Devices</span>
+                        </ons-col>
                     </ons-row>
                 </div>
                 <div class="card">
