@@ -244,7 +244,7 @@
             .done(function(data, textStatus, jqXHR) {
                 // console.log("HTTP Request Succeeded: " + jqXHR.status);
 
-                var packets = data['kismet.packetchain.peak_packets_rrd']['kismet.common.rrd.minute_vec'][0];
+                var packets = data['kismet.packetchain.peak_packets_rrd']['kismet.common.rrd.hour_vec'][0];
                 $('#numpackets').html(packets);
             })
             .fail(function(jqXHR, textStatus, errorThrown) {
@@ -794,7 +794,7 @@ $.post("/poi/create_poi.cmd", data = postdata, dataType = "json");
                         <ons-col class="bignum"><span id="numsources">-</span>/<span id="numsources_t">-</span><br><span class="subtitle" id="SourceErrors">Active/Total Sources</span><br></ons-col>
                         <ons-col class="bignum"><span id="numchans">-</span><br><span class="subtitle">Channels</span></ons-col>
                         <ons-col class="bignum"><span id="numpackets" style="padding-right:3px;">-</span>
-                            <br><span class="subtitle">Packets/sec</span>
+                            <br><span class="subtitle">Packets/min</span>
                         </ons-col>
                         <ons-col class="bignum">
                             <span id="numdevs">-</span>
