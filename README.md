@@ -33,6 +33,19 @@ Prerequisite: git-master level kismet. https://github.com/kismetwireless/kismet
 
 The trailing "/" is important. Without it you will get a 404.
 
-Its still very eary in development but it should work.
+Its still very early in development but it should work.
 
 To get "full screen" UI , access the page via your normal browser on the mobile device and then create a shortcut on the "home screen."
+
+------- 
+Made some modifications and updates to elkentaro's original very useful dashboard. 
+- Updated some of the fields/views to track with some changes in Kismet (some tips from terbo https://github.com/elkentaro/KismetMobileDashboard/pull/13).
+- Added a new function/row for GPS information that includes a link to Google Maps with the current location as a pin.
+- Did some minor work to clean up some errors the browser console was reporting.
+
+If you don't want to use the formal make process above, simply do the following:
+1. Create a "plugins" folder in the user that runs kismet's home/.kismet folder. For example: ~/.kismet/plugins or /root/.kismet/plugins
+2. In this folder, create a new folder for "mobiledashboard".
+3. Copy the manifest.conf file into the "mobiledashboard" folder.
+4. Copy (recursively) the httpd folder into the "mobiledashboard" folder.
+5. Restart Kismet.
